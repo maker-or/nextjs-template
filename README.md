@@ -29,6 +29,8 @@ npx @maker-or/opencms dev
 
 `OPENCMS_API_TOKEN` is server-only and must never use a `NEXT_PUBLIC_` prefix. The current OpenCMS API protects reads with authentication, so provide this token when running against a private development API. The adapter is intentionally isolated so it can be replaced with the published OpenCMS SDK package once that package is released.
 
+Set `OPENCMS_API_URL` to the deployed OpenCMS API origin when the site runs outside the local CLI workflow. The template does not silently fall back to localhost.
+
 Schema changes are synced by:
 
 ```bash

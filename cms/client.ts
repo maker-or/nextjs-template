@@ -24,6 +24,9 @@ export async function getPages(): Promise<Page[]> {
   if (!opencms.projectId) {
     throw new OpenCmsClientError("NEXT_PUBLIC_OPENCMS_PROJECT_ID is not configured.");
   }
+  if (!opencms.apiUrl) {
+    throw new OpenCmsClientError("OPENCMS_API_URL is not configured.");
+  }
 
   const url = new URL(`/api/projects/${opencms.projectId}/pages`, opencms.apiUrl);
   url.searchParams.set("environment", opencms.environment);
