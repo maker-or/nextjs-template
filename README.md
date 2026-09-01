@@ -26,6 +26,7 @@ npx @maker-or/opencms dev
 - `cms/page-renderer.tsx` renders the JSON block content without introducing a visual page builder.
 - `/` renders the `home` page, or the first available page.
 - `/:slug` renders a page by slug.
+- If the API is private or not configured, the routes render a connection state instead of throwing a 500 error.
 
 `OPENCMS_API_TOKEN` is server-only and must never use a `NEXT_PUBLIC_` prefix. The current OpenCMS API protects reads with authentication, so provide this token when running against a private development API. The adapter is intentionally isolated so it can be replaced with the published OpenCMS SDK package once that package is released.
 
