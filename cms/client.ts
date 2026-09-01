@@ -28,13 +28,11 @@ export async function getPages(): Promise<Page[]> {
     throw new OpenCmsClientError("OPENCMS_API_URL is not configured.");
   }
 
-  const url = new URL(`/api/projects/${opencms.projectId}/pages`, opencms.apiUrl);
+  const url = new URL(`/api/delivery/projects/${opencms.projectId}/pages`, opencms.apiUrl);
   url.searchParams.set("environment", opencms.environment);
 
-  const token = process.env.OPENCMS_API_TOKEN;
   const response = await fetch(url, {
     cache: "no-store",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
 
   if (!response.ok) {

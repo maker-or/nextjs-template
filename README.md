@@ -28,7 +28,7 @@ npx @maker-or/opencms dev
 - `/:slug` renders a page by slug.
 - If the API is private or not configured, the routes render a connection state instead of throwing a 500 error.
 
-`OPENCMS_API_TOKEN` is server-only and must never use a `NEXT_PUBLIC_` prefix. The current OpenCMS API protects reads with authentication, so provide this token when running against a private development API. The adapter is intentionally isolated so it can be replaced with the published OpenCMS SDK package once that package is released.
+The template uses OpenCMS's read-only delivery API. It does not contain Clerk credentials or a management API token. The delivery API returns only pages with `published` status for the configured environment. Dashboard and CLI mutations remain protected by OpenCMS authentication.
 
 Set `OPENCMS_API_URL` to the deployed OpenCMS API origin when the site runs outside the local CLI workflow. The template does not silently fall back to localhost.
 
