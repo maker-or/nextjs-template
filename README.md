@@ -10,6 +10,10 @@ cp .env.example .env.local
 npm run dev
 ```
 
+`dev` is the complete OpenCMS development workflow: it authenticates the CLI when needed, syncs `cms/schema.json` to the development environment, and then starts Next.js. Use only this command during local development; do not run it alongside `npx @maker-or/opencms dev`.
+
+The underlying Next.js-only script is available as `npm run dev:next`. The CLI uses that internal script after it completes the OpenCMS sync so the two commands do not recursively start each other or launch duplicate Next.js servers.
+
 The CLI normally creates `.env.local` and `cms/schema.json` for you:
 
 ```bash

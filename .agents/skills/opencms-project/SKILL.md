@@ -1,102 +1,142 @@
 ---
 name: opencms-project
-description: Build a Next.js website on top of OpenCMS by choosing the right project files and CLI command for schemas, content, local development, and deployment.
+description: Build and maintain a Next.js website connected to OpenCMS, including content modeling, rendering, local development, and deployment.
 ---
 
-# Building on OpenCMS
+# Build on OpenCMS
 
-Use this skill when creating or changing a website that gets its content from OpenCMS.
+Use this skill when creating or changing a Next.js website connected to OpenCMS.
 
-The goal is a normal Next.js application with a content model managed in code and content managed in OpenCMS. Keep the website presentation in app/ and the OpenCMS integration in cms/.
+The application has two separate sources of truth:
 
+- Website code lives in the Next.js project.
+- Page data lives in the OpenCMS project and environment.
+
+Do not treat a Next.js route as an OpenCMS page. They are different things.
+
+## The important distinction
+
+There are two meanings of “page” in this workflow:
+
+- `app/page.tsx` or `app/[slug]/page.tsx` is a Next.js route. It defines how the website renders.
+- An OpenCMS page is a cloud document/entry with a title, slug, status, environment, and block content.
+
+Creating or editing a file under `app/` never creates an OpenCMS page. Creating or editing `cms/schema.json` also never creates an OpenCMS page.
+
+The current template reads published OpenCMS content through the delivery API. It does not contain a management token and it has no command for creating page records. Unless an authenticated OpenCMS management API or supported CLI content command is explicitly available, do not claim that a page or content was created in the cloud.
 
 ## Project shape
 
-An OpenCMS website has this shape:
+Keep the generated project organized like this:
 
     project/
-    ├── app/                  # Next.js routes and presentation
+    ├── app/                  # Next.js routes, UI, and presentation
     ├── cms/
-    │   ├── schema.json       # Content model: blocks and content types
-    │   ├── client.ts         # Reads published OpenCMS content
+    │   ├── schema.json       # Developer-owned content model
+    │   ├── client.ts         # Read-only delivery client
     │   ├── opencms.ts        # Project connection settings
-    │   └── page-renderer.tsx # Turns content blocks into React UI
-    └── .env.local            # Project connection values; never commit
+    │   └── page-renderer.tsx # Maps CMS blocks to React UI
+    └── .env.local            # Local connection values; never commit
 
-The starter uses / for the home page and /[slug] for other pages. Keep that convention unless the product needs a different routing model.
+The default route convention is `/` for the `home` slug and `/[slug]` for other published pages.
 
 ## Decide where a change belongs
 
-First classify the request:
-
 | Request | Change |
 | --- | --- |
-| Change layout, styling, navigation, or page behavior | app/ and normal Next.js components |
-| Add a reusable content block | cms/schema.json and cms/page-renderer.tsx |
-| Add a content type | cms/schema.json, then add the UI needed to render it |
-| Change page title, slug, or block values | OpenCMS dashboard, not source code |
-| Change project/environment connection | .env.local, not a hardcoded URL |
-| Make schema changes available in the cloud | OpenCMS CLI |
+| Change layout, styling, navigation, or interaction | `app/` and normal Next.js components |
+| Add a reusable CMS block | `cms/schema.json` and `cms/page-renderer.tsx` |
+| Add a content type | `cms/schema.json` and the renderer/UI needed for it |
+| Change title, slug, status, environment, or block values | OpenCMS dashboard or an explicitly supported authenticated content command |
+| Change project connection | `.env.local` |
+| Make a schema available in the cloud | `npx @maker-or/opencms dev` or `deploy` |
 
-Do not put dashboard-entered content in source files. Source code describes the shape and presentation; the dashboard contains the actual page data.
+Source code describes the content shape and presentation. OpenCMS stores the actual content values.
 
-## Define content
+## Define the content model
 
-cms/schema.json is the single content-model format. Use JSON;
-A block should have:
+`cms/schema.json` is the single content-model format. Use JSON, not Markdown, GraphQL, or a second parallel schema.
 
-- a stable machine name, such as hero or feature-list;
+Each block needs:
+
+- a stable machine name, such as `hero` or `feature-list`;
 - a human-readable label;
-- fields with the supported field types;
-- a renderer in cms/page-renderer.tsx.
+- fields using the supported field types: `text`, `slug`, `number`, or `boolean`;
+- a matching renderer in `cms/page-renderer.tsx`.
 
-When adding a block, update both the schema and renderer. A schema entry without a renderer can be saved in OpenCMS but cannot be displayed by the website.
+When adding a block, update both the schema and renderer. A schema entry without a renderer can be saved in OpenCMS but will not display correctly.
 
-The current supported field types are text, slug, number, and boolean. Use the existing schema version and preserve existing blocks unless a breaking change is intentional.
+Preserve the existing schema version and blocks unless a breaking change is intentional.
+
+## Creating actual CMS pages
+
+The current supported content workflow is:
+
+1. Define or update the schema in `cms/schema.json`.
+2. Run the CLI so the schema is synchronized.
+3. Create an OpenCMS page in the dashboard under the intended environment.
+4. Give it a slug, normally `home` for `/`.
+5. Add blocks whose types exist in the schema.
+6. Publish the page.
+7. Load the website and verify that the delivery API returns it.
+
+An AI coding agent may create the Next.js route, schema, and renderer, but it must not imply that this created the cloud page. If it does not have an authorized management operation for page creation, it must clearly report:
+
+- what was created locally;
+- whether the schema was synchronized;
+- whether a cloud page was found;
+- the dashboard action still required from the user.
+
+Do not silently replace missing CMS content with production-looking hard-coded content. If a page is missing, render the starter empty state or a clearly labeled development preview only when the user explicitly requests a preview.
 
 ## Use the commands at the right time
 
-### dev
+### `dev`
 
-Run this from the generated project:
+Run from the generated project:
 
     npx @maker-or/opencms dev
 
-It synchronizes cms/schema.json with the development environment and starts the local Next.js server. Run it after changing the schema and when checking the website against development content.
+The template's `dev` package script is the same workflow, so `npm run dev`, `pnpm dev`, `yarn dev`, and `bun run dev` are also supported. They invoke the CLI, which synchronizes the schema before starting Next.js. Use one of these commands, not both.
 
-It does not create pages. Create pages and enter their content in the OpenCMS dashboard.
+This synchronizes `cms/schema.json` with the development environment and starts the local Next.js server. It does not create page records, enter block values, or publish content.
 
-Use this command instead of starting a second server with npm run dev or bun dev. Running both can cause port conflicts and can skip schema synchronization.
+Use this after schema changes and when checking the website against development content. `dev:next` is an internal template script for the CLI; it starts only Next.js and must not be used as a replacement for the OpenCMS development command.
 
-### deploy
+### `deploy`
 
-When development content and schema are ready:
+When development schema and content are ready:
 
     npx @maker-or/opencms deploy
 
-This synchronizes the schema and promotes development content to production. The deploy action belongs to the CLI; do not add a deploy button to the website.
+This synchronizes the schema and promotes development content to production. Deployment belongs to the CLI; do not add a deployment button to the website.
 
-### login and logout
+### `login` and `logout`
 
     npx @maker-or/opencms login
     npx @maker-or/opencms logout
 
-Use login when a CLI command reports an expired or missing session. logout removes the local CLI session.
+Use `login` when the CLI reports a missing or expired session. These commands authenticate the CLI, not the generated website.
 
 ## What appears on the website
 
-The starter reads published pages for the configured environment. A schema alone does not create a page, and a draft page does not appear in the website.
+The delivery API returns only pages with `published` status in the configured environment. Therefore:
 
-If the website is empty:
+- a schema alone produces no page;
+- a draft page does not appear;
+- a page in production does not appear when the site is configured for development;
+- a page with unsupported block types may load without the intended UI.
 
-1. Confirm the project ID and API URL in .env.local.
-2. Create a page in the OpenCMS dashboard.
-3. Give it the expected slug, usually home for /.
-4. Add blocks whose types exist in cms/schema.json.
-5. Publish the page in the current environment.
-6. Refresh the website.
+When the website is empty, check the following in order:
 
-If a schema edit is not visible in OpenCMS, run npx @maker-or/opencms dev again. If production is missing the latest development content, run npx @maker-or/opencms deploy.
+1. `.env.local` has the correct project ID, API URL, and environment.
+2. `cms/schema.json` has been synchronized with `npx @maker-or/opencms dev`.
+3. A page exists in the same OpenCMS project and environment.
+4. Its slug is `home` for `/`, or matches the requested route.
+5. Its status is `published`.
+6. Its block types have renderers.
+
+If the site still appears empty, report the API response and the missing condition instead of inventing content in source code.
 
 ## Connection settings
 
@@ -106,16 +146,28 @@ The generated project uses:
     OPENCMS_API_URL=https://your-opencms-domain.example
     OPENCMS_ENVIRONMENT=development
 
-The CLI normally writes these values. Never commit .env.local, hardcode a personal project ID, or add credentials to client-side code.
+The CLI normally writes these values. Never commit `.env.local`, hard-code a personal project ID, add Clerk credentials to the template, or put a management token in browser code.
 
-For an existing project, a localhost:3000 API URL usually means it was generated with an older CLI. Update it to the current OpenCMS API URL or regenerate the project with the CLI.
+For the CLI itself, configure the control-plane origin with `OPENCMS_URL`. It may point to a hosted OpenCMS deployment, a local instance, or a self-hosted instance. Do not hard-code a Vercel preview URL or assume that every OpenCMS installation uses the same host. `OPENCMS_API_URL` and `OPENCMS_DASHBOARD_URL` are compatibility overrides for deployments where the API and dashboard use different origins.
 
-## Validation
+## Validation and completion report
 
-After changing the website or content integration, run:
+After changing the website or integration, run:
 
     npm run typecheck
     npm run lint
     npm run build
 
-Then use npx @maker-or/opencms dev for the end-to-end check. Confirm that the schema sync completes, the local site starts, and a published home page renders at /.
+Then run:
+
+    npx @maker-or/opencms dev
+
+Before saying the work is complete, distinguish the results:
+
+- local code changed;
+- schema synchronized;
+- cloud page exists;
+- cloud page is published;
+- published page renders at the expected route.
+
+Never use “synced” to mean that page content was created unless a page mutation was actually performed and verified.
