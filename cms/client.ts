@@ -32,7 +32,9 @@ export async function getPages(): Promise<Page[]> {
   url.searchParams.set("environment", opencms.environment);
 
   const response = await fetch(url, {
-    cache: "no-store",
+    ...(opencms.environment === "production"
+      ? { next: { revalidate: 30 } }
+      : { cache: "no-store" as const }),
   });
 
   if (!response.ok) {

@@ -74,7 +74,7 @@ The current supported content workflow is:
 
 1. Define or update the schema in `cms/schema.json`.
 2. Run the CLI so the schema is synchronized.
-3. Create an OpenCMS page in the dashboard under the intended environment.
+3. Create an OpenCMS page in the dashboard development environment.
 4. Give it a slug, normally `home` for `/`.
 5. Add blocks whose types exist in the schema.
 6. Publish the page.
@@ -109,7 +109,7 @@ When development schema and content are ready:
 
     npx @maker-or/opencms deploy
 
-This synchronizes the schema and promotes development content to production. Deployment belongs to the CLI; do not add a deployment button to the website.
+This synchronizes the development schema, then promotes that schema and the published development pages as one production snapshot. Drafts remain private, stale production pages are removed, and production schema/content are read-only in the dashboard. Deployment belongs to the CLI; do not add a deployment button to the website.
 
 ### `login` and `logout`
 
@@ -126,6 +126,8 @@ The delivery API returns only pages with `published` status in the configured en
 - a draft page does not appear;
 - a page in production does not appear when the site is configured for development;
 - a page with unsupported block types may load without the intended UI.
+
+Create, edit, publish, unpublish, and delete pages in development. Treat production as a deployed snapshot; do not attempt to mutate production pages directly.
 
 When the website is empty, check the following in order:
 

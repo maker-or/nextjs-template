@@ -36,6 +36,8 @@ The template uses OpenCMS's read-only delivery API. It does not contain Clerk cr
 
 Set `OPENCMS_API_URL` to the deployed OpenCMS API origin when the site runs outside the local CLI workflow. The template does not silently fall back to localhost.
 
+`npx @maker-or/opencms deploy` promotes the development schema and published pages as one production snapshot. It also passes the project ID, API origin, and `production` CMS environment to Vercel at build time and runtime when `VERCEL_TOKEN` is configured. On Vercel, the template defaults `VERCEL_ENV=production` deployments to production content unless `OPENCMS_ENVIRONMENT` explicitly overrides it.
+
 For development from another device on the same network, the template automatically allows the current machine's non-internal IPv4 addresses for Next.js HMR. Set `NEXT_ALLOWED_DEV_ORIGINS` only when an additional hostname or address is needed.
 
 Schema changes are synced by:

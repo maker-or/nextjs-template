@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npx --yes @maker-or/opencms@0.1.7 dev",
+    "dev": "npx --yes @maker-or/opencms@0.1.8 dev",
     "dev:next": "next dev",
     "build": "next build",
     "start": "next start",
